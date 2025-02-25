@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="rostopic" type="rostopic" name="start_flag_publisher"
+            args="pub  /start_flag std_msgs/Bool true"/>
+</launch>

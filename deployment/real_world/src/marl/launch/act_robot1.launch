@@ -1,0 +1,22 @@
+<!--
+    在从机（每个分布式的移动机器人）上进行订阅
+    订阅动捕数据中当前机器人的位置信息并转换为所需要的话题消息进行发布
+    启动policy节点
+-->
+
+<launch>
+<!-- 启动底盘 -->
+    <!-- <node name ="pub_robot1" pkg="marl" type="pub_robot.py" output="screen">
+        <remap from="/robot/Odometry" to="/robot1/odom"/>
+        <remap from="/Pose" to="/robot1/pose"/>
+    </node> -->
+    <node name ="policy_to_cmd1" pkg="marl" type="policy.py" output="screen">
+        <remap from="/robot/cmd_vel" to="/robot1/cmd_vel"/>
+        <param name="robot_id" value="0" />
+        <!-- <remap from="/robot1/Odometry" to="/robot1/odom"/>
+        <remap from="/robot2/Odometry" to="/robot2/odom"/>
+        <remap from="/robot3/Odometry" to="/robot3/odom"/> -->
+    </node>
+
+
+</launch>

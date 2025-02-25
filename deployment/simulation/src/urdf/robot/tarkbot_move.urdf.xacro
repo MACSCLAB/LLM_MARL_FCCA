@@ -1,0 +1,63 @@
+<robot name="my_car_move" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:property name="id" value="$(arg id)" />
+    <!-- 传动实现:用于连接控制器与关节 -->
+    <xacro:macro name="joint_trans" params="joint_name">
+        <!-- Transmission is important to link the joints and the controller -->
+        <transmission name="${joint_name}_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${joint_name}">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${joint_name}_motor">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+
+    <!-- 每一个驱动轮都需要配置传动装置 -->
+    <xacro:joint_trans joint_name="left_front_wheel_base_link_${id}" />
+    <xacro:joint_trans joint_name="right_front_wheel_base_link_${id}" />
+    <xacro:joint_trans joint_name="left_back_wheel_base_link_${id}" />
+    <xacro:joint_trans joint_name="right_back_wheel_base_link_${id}" />
+
+    <!-- 控制器 -->
+    <gazebo>
+        <plugin name="mecanum_controller_${id}" filename="libgazebo_ros_planar_move.so">
+            <rosDebugLevel>Debug</rosDebugLevel>
+            <publishWheelTF>false</publishWheelTF>
+            <robotNamespace></robotNamespace>
+            <publishTf>1</publishTf>
+            <publishWheelJointState>false</publishWheelJointState>
+            <alwaysOn>false</alwaysOn>
+            <updateRate>100.0</updateRate>
+            <legacyMode>true</legacyMode>
+            <leftFrontJoint>left_front_wheel_base_link_${id}</leftFrontJoint> <!-- 左前轮 -->
+            <rightFrontJoint>right_front_wheel_base_link_${id}</rightFrontJoint> <!-- 右前轮 -->
+            <leftRearJoint>left_back_wheel_base_link_${id}</leftRearJoint> <!-- 左后轮 -->
+            <rightRearJoint>right_back_wheel_base_link_${id}</rightRearJoint> <!-- 右后轮 -->
+            <!-- TODO 参数还没调整 -->
+            <wheelSeparation>${base_link_width}</wheelSeparation> <!-- 车轮间距 -->
+            <wheelDiameter>${wheel_radius * 2}</wheelDiameter> <!-- 车轮直径 -->
+            <broadcastTF>1</broadcastTF>
+            <wheelTorque>30</wheelTorque>
+            <wheelAcceleration>1.8</wheelAcceleration>
+            <commandTopic>cmd_vel_${id}</commandTopic> <!-- 运动控制话题 -->
+            <odometryFrame>odom_${id}</odometryFrame>
+            <odometryTopic>odom_${id}</odometryTopic> 里程计话题
+            <robotBaseFrame>/base_footprint</robotBaseFrame> <!-- 根坐标系 -->
+        </plugin>
+
+        <plugin name="p3d_base_controller_${id}" filename="libgazebo_ros_p3d.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>50.0</updateRate>
+            <bodyName>base_link_${id}</bodyName>
+            <topicName>ground_truth_${id}/state</topicName>
+            <gaussianNoise>0.01</gaussianNoise>
+            <frameName>world</frameName>
+            <xyzOffsets>0 0 0</xyzOffsets>
+            <rpyOffsets>0 0 0</rpyOffsets>
+        </plugin>
+    </gazebo>
+
+</robot>

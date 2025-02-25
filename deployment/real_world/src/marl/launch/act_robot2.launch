@@ -1,0 +1,15 @@
+<launch>
+    <!-- <node name ="pub_robot2" pkg="marl" type="pub_robot.py" output="screen">
+        <remap from="/robot/Odometry" to="/robot2/odom"/>
+        <remap from="/Pose" to="/robot2/pose"/>
+    </node> -->
+    <node name ="policy_to_cmd2" pkg="marl" type="policy.py" output="screen">
+        <remap from="/robot/cmd_vel" to="/robot2/cmd_vel"/>
+        <param name="robot_id" value="1" />
+        <!-- <remap from="/robot1/Odometry" to="/robot1/odom"/>
+        <remap from="/robot2/Odometry" to="/robot2/odom"/>
+        <remap from="/robot3/Odometry" to="/robot3/odom"/> -->
+    </node>
+
+
+</launch>

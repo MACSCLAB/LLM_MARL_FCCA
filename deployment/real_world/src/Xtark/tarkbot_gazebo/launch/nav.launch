@@ -1,0 +1,39 @@
+<launch>
+
+	<!-- 标签 -->
+	<arg name="map_file" default="tarkbot_test.yaml"/>
+
+    <!-- 将 Urdf 文件的内容加载到参数服务器 -->
+    <param name="robot_description" command="$(find xacro)/xacro $(find tarkbot_gazebo)/urdf/tarkbot_car.urdf.xacro" />
+    <!-- 启动 gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+         <arg name="world_name" value="$(find tarkbot_gazebo)/worlds/tarkbot_gazebo.world" />
+    </include>
+    <!-- 在 gazebo 中显示机器人模型 -->
+    <node pkg="gazebo_ros" type="spawn_model" name="model" args="-urdf -model mycar -param robot_description"  />
+
+    <!-- 添加关节状态发布节点 -->
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" />
+
+    <!-- 添加机器人状态发布节点 -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" >
+     <param name="publish_frequency" type="double" value="50.0" /> <!--发布频率-->
+    </node>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 -1.57 0 -1.57 /support /depth_camera" />
+
+	<!-- 启动Map server功能包，发布地图 -->
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find tarkbot_gazebo)/maps/$(arg map_file)" />
+
+	<!-- 启动AMCL 自适应蒙特卡洛定位功能 -->
+	<include file="$(find tarkbot_gazebo)/launch/includes/tarkbot_amcl.launch">
+		<arg name="odom_frame"       value="odom"/>
+		<arg name="base_frame"       value="base_footprint"/>
+		<arg name="global_frame"     value="map"/>
+		<arg name="odom_model_type"  value="diff"/>
+	</include>
+
+	<!-- 启动move_base路径规划功能 -->
+	<include file="$(find tarkbot_gazebo)/launch/includes/tarkbot_move_base.launch">
+	</include>
+
+</launch>

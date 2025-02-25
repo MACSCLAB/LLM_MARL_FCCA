@@ -1,0 +1,44 @@
+
+<!--这个launch文件是为了测试系统的通信是否正常进行，
+    模拟optitrack虚拟发布了障碍物以及机器人的位置信息，
+    在该节点中，订阅了障碍物消息转换的节点-->
+<launch>
+    <!-- 启动第一个obstacle_publisher节点 -->
+    <node name="obstacle_publisher_1" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/obstacle1/pose"/>
+        <remap from="/obstacle/vel" to="/obstacle1/vel"/>
+    </node>
+    
+    <!-- 启动第二个obstacle_publisher节点 -->
+    <node name="obstacle_publisher_2" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/obstacle2/pose"/>
+        <remap from="/obstacle/vel" to="/obstacle2/vel"/>
+    </node>
+
+    <!-- 启动第二个obstacle_publisher节点 -->
+    <node name="obstacle_publisher_3" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/obstacle3/pose"/>
+        <remap from="/obstacle/vel" to="/obstacle3/vel"/>
+    </node>
+
+    <!-- 将obstacle转换为obstaclelist类型的msg-->
+    <node name="pub_obstacles" pkg="marl" type="pub_obstacle.py" output="screen">
+        <remap from="/obstacle/pose" to="/obstacle3/pose"/>
+        <remap from="/obstacle/vel" to="/obstacle3/vel"/>
+        <param name="~num_obstacles" value="3" />
+    </node>
+
+    <node name="robot_publisher_1" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/robot1/pose"/>
+        <remap from="/obstacle/vel" to="/robot1/vel"/>
+    </node>    
+        <node name="robot_publisher_2" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/robot2/pose"/>
+        <remap from="/obstacle/vel" to="/robot2/vel"/>
+    </node>    
+        <node name="robot_publisher_3" pkg="marl" type="obstacle_test.py" output="screen">
+        <remap from="/obstacle/pose" to="/robot3/pose"/>
+        <remap from="/obstacle/vel" to="/robot3/vel"/>
+    </node>    
+   
+</launch>

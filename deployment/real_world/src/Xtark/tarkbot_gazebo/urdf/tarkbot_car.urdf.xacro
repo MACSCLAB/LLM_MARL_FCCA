@@ -1,0 +1,10 @@
+<!-- 组合小车底盘与摄像头 -->
+<robot name="my_car_camera" xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:include filename="tarkbot_head.xacro" />
+    <xacro:include filename="tarkbot_car_base.urdf.xacro" />
+    <xacro:include filename="tarkbot_car_camera.urdf.xacro" /> 
+    <xacro:include filename="tarkbot_car_laser.urdf.xacro" /> 
+    <xacro:include filename="tarkbot_move.urdf.xacro" /> 
+    <xacro:include filename="tarkbot_lidar_sensor.urdf.xacro" /> 
+    <xacro:include filename="tarkbot_camera_sensor.urdf.xacro" /> 
+</robot>

@@ -1,0 +1,12 @@
+<!--Set the robots' goals-->
+<launch>
+    <param name="/robot1/gx" value="1" />
+    <param name="/robot1/gy" value="1"/>
+    <param name="/robot2/gx" value="2" />
+    <param name="/robot2/gy" value="2"/>
+    <param name="/robot3/gx" value="3" />
+    <param name="/robot3/gy" value="3"/>
+    
+<!--bool 类型 当所有机器人的策略节点都启动时，才进行编队避障 -->
+    
+</launch>

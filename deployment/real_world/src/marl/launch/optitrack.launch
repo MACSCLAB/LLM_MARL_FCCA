@@ -1,0 +1,65 @@
+<!--
+    发布终点位置
+    系统真实运行时，用于获取障碍物以及机器人编队的准确位姿的launch文件
+    由主机订阅，用于发布所有刚体的坐标信息以及障碍物的位置速度信息
+    订阅了动捕系统中的刚体数据
+    发布pub_obstacle节点将多个障碍物转换为
+    -->
+<launch>
+    <param name="/robot1/gx" value="1.2" />
+    <param name="/robot1/gy" value="0.7"/>
+    <param name="/robot2/gx" value="1.8" />
+    <param name="/robot2/gy" value="1.1"/>
+    <param name="/robot3/gx" value="1.2" />
+    <param name="/robot3/gy" value="1.6"/>
+    
+<!--bool 类型 当所有机器人的策略节点都启动时，才进行编队避障 -->
+    <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
+        <rosparam subst_value="true">
+        server: 192.168.2.2
+        port: 3883
+
+        update_frequency: 100.0
+        frame_id: world
+
+        # Use the VRPN server's time, or the client's ROS time.
+        use_server_time: false
+        broadcast_tf: true
+
+        # Must either specify refresh frequency > 0.0, or a list of trackers to create
+        refresh_tracker_frequency: 1.0
+        #trackers:
+        #- FirstTracker
+        #- SecondTracker
+        </rosparam>
+        
+        <remap from="vrpn_client_node/RigidBody01/pose" to="/robot1/pose"/>
+        <remap from="vrpn_client_node/RigidBody02/pose" to="/robot2/pose"/>
+        <remap from="vrpn_client_node/RigidBody03/pose" to="/robot3/pose"/>
+        <!--obstacle subscribe-->
+        <remap from="vrpn_client_node/RigidBody04/pose" to="/obstacle1/pose"/>
+        <remap from="vrpn_client_node/RigidBody05/pose" to="/obstacle2/pose"/>
+        <!-- <remap from="vrpn_client_node/RigidBody06/pose" to="/obstacle3/pose"/> -->
+    </node>
+    
+    <node name="robot1_odom_pub" pkg="marl" type="pub_robot.py" output="screen">
+        <param name="robot_id" value="0" />
+        <remap from="/Pose" to="/robot1/pose"/>
+        <remap from="/robot/Odometry" to="/robot1/odom"/>
+    </node>
+    <node name="robot2_odom_pub" pkg="marl" type="pub_robot.py" output="screen">
+        <param name="robot_id" value="1" />
+        <remap from="/Pose" to="/robot2/pose"/>
+        <remap from="/robot/Odometry" to="/robot2/odom"/>
+    </node>
+    <node name="robot3_odom_pub" pkg="marl" type="pub_robot.py" output="screen">
+        <param name="robot_id" value="2" />
+        <remap from="/Pose" to="/robot3/pose"/>
+        <remap from="/robot/Odometry" to="/robot3/odom"/>
+    </node>
+    <node name="obstacle_pub" pkg="marl" type="pub_obstacle.py" output="screen">
+        <!-- <remap from="/Pose" to="/robot3/pose"/>
+        <remap from="/robot/Odometry" to="/robot3/odom"/> -->
+    </node>
+
+</launch>

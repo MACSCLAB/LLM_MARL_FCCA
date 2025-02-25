@@ -1,0 +1,205 @@
+<!--
+    使用 xacro 优化 URDF 版的小车底盘实现：
+
+    实现思路:
+    1.将一些常量、变量封装为 xacro:property
+      比如:PI 值、小车底盘半径、离地间距、车轮半径、宽度 ....
+    2.使用 宏 封装驱动轮以及支撑轮实现，调用相关宏生成驱动轮与支撑轮
+
+-->
+<!-- 根标签，必须声明 xmlns:xacro -->
+<robot name="my_base" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="tarkbot_head.xacro" />
+    <!-- 封装变量、常量 -->
+    <!-- PI 值设置精度需要高一些，否则后续车轮翻转量计算时，可能会出现肉眼不能察觉的车轮倾斜，从而导致模型抖动 -->
+    <xacro:property name="PI" value="3.1415926"/>
+    <!-- 宏:黑色设置 -->
+    <material name="black">
+        <color rgba="0.0 0.0 0.0 1.0" />
+    </material>
+
+    <!-- 动态属性 -->
+    <xacro:property name="yaw" value="$(arg yaw)" />
+    <xacro:property name="id" value="$(arg id)" />
+    <xacro:property name="pose_x" value="$(arg pose_x)" />
+    <xacro:property name="pose_y" value="$(arg pose_y)" />
+
+    <!-- 底盘属性 -->
+    <xacro:property name="base_link_length" value="0.25" />  <!--base_link 长  -->
+    <xacro:property name="base_link_width" value="0.18" />  <!--base_link 宽 -->
+    <xacro:property name="base_link_height" value="0.18" />  <!--base_link 高 -->
+    <xacro:property name="earth_space" value="0.051" /> <!-- 离地间距 -->
+    <xacro:property name="base_link_m" value="2.0" /> <!-- 质量  -->
+    
+    <!-- 底盘 -->
+    <link name="base_footprint">
+      <visual>
+        <geometry>
+          <sphere radius="0.001" />
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="base_link_${id}">
+      <visual>
+        <geometry>
+          <mesh filename="package://tarkbot_gazebo/meshes/base_r20_mec.stl" />
+          <!-- <cylinder radius="${base_link_radius}" length="${base_link_length}" /> -->
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <material name="black">
+          <color rgba="0.5 0.3 0.0 0.5" />
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tarkbot_gazebo/meshes/base_r20_mec.stl" />
+          <!-- <cylinder radius="${base_link_radius}" length="${base_link_length}" /> -->
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </collision>
+      <xacro:box_inertial_matrix m="${base_link_m}" l="${base_link_length}" w="${base_link_width}" h="${base_link_height}" />
+      <!-- <xacro:cylinder_inertial_matrix m="${base_link_m}" r="${base_link_radius}" h="${base_link_length}" /> -->
+    </link>
+
+    <!-- 底盘与原点连接的关节 -->
+    <joint name="base_link2base_footprint" type="fixed">
+      <parent link="base_footprint" />
+      <child link="base_link_${id}" />
+      <origin xyz="0 0 0.1155" />
+    </joint>
+
+    <gazebo reference="base_link_${id}">
+      <material>Gazebo/Blue</material>
+      <pose>${pose_x} ${pose_y} 0 0 0 ${yaw}</pose>
+    </gazebo>
+
+    <xacro:if value="${id == 'r0' or id == 'r1' or id == 'r2'}">
+      <link name="jetson">
+        <visual>
+          <geometry>
+            <box size="0.15 0.15 0.1" />
+          </geometry>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <material name="black">
+            <color rgba="0 0 0 1" />
+          </material>
+        </visual>
+        <collision>
+          <geometry>
+            <box size="0.15 0.15 0.1" />
+          </geometry>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </collision>
+        <inertial>
+          <mass value="1.0" />
+          <origin xyz="0 0 0" />
+          <inertia ixx="0.003125" ixy="0.0" ixz="0.0"
+                  iyy="0.003125" iyz="0.0"
+                  izz="0.0045" />
+        </inertial>
+      </link>
+
+      <joint name="jetson2baselink" type="fixed">
+        <parent link="base_link_${id}" />
+        <child link="jetson" />
+        <origin xyz="0 0 0.05" />
+      </joint>
+
+      <gazebo reference="jetson">
+        <material>Gazebo/Grey</material>
+        <pose>0 0 0 0 0 0</pose>
+      </gazebo>
+    </xacro:if>
+
+    <!-- 驱动轮 -->
+    <!-- 驱动轮属性 -->
+    <xacro:property name="wheel_radius" value="0.03" /> <!-- 半径 -->
+    <xacro:property name="wheel_length" value="0.02" /> <!-- 宽度 -->
+    <xacro:property name="wheel_m" value="1.0" /> <!-- 质量  -->
+    
+    <!-- 驱动轮宏实现 -->
+    <xacro:macro name="add_wheels" params="side position flag1 flag2">
+      <link name="${side}_${position}_wheel">
+        <visual>
+
+          <!-- <geometry>
+            <cylinder radius="${wheel_radius}" length="${wheel_length}" />
+          </geometry> -->
+
+          <xacro:if value="${side == 'left' and position == 'front'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100l.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'right' and position == 'front'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100r.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'left' and position == 'back'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100r.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'right' and position == 'back'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100l.stl"/>
+            </geometry>
+          </xacro:if>
+
+          <origin xyz="0.0 0.0 0.0" rpy="${PI / 2} 0.0 0.0" />
+          <material name="black" />
+        </visual>
+        <collision>
+
+          <!-- <geometry>
+            <cylinder radius="${wheel_radius}" length="${wheel_length}" />
+          </geometry> -->
+
+          <xacro:if value="${side == 'left' and position == 'front'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100l.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'right' and position == 'front'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100r.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'left' and position == 'back'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100r.stl"/>
+            </geometry>
+          </xacro:if>
+          <xacro:if value="${side == 'right' and position == 'back'}">
+            <geometry>
+              <mesh filename="package://tarkbot_gazebo/meshes/wheel/m100l.stl"/>
+            </geometry>
+          </xacro:if>
+
+          <origin xyz="0.0 0.0 0.0" rpy="${PI / 2} 0.0 0.0" />
+        </collision>
+        <xacro:cylinder_inertial_matrix m="${wheel_m}" r="${wheel_radius}" h="${wheel_length}" />
+      </link>
+
+      <!-- 轮子到与底盘连接的关节 -->
+      <joint name="${side}_${position}_wheel_base_link_${id}" type="continuous">
+        <parent link="base_link_${id}" />
+        <child link="${side}_${position}_wheel" />
+        <origin xyz="${flag2 * 0.088} ${flag1 * 0.096} -0.069" rpy="0 0 ${flag1 * 1.57}" />
+        <!-- <axis xyz="0 1 0" /> -->
+      </joint>
+
+      <gazebo reference="${side}_${position}_wheel">
+        <material>Gazebo/Red</material>
+      </gazebo>
+    </xacro:macro>
+
+    <xacro:add_wheels side="left" position="front" flag1="1" flag2="1" />
+    <xacro:add_wheels side="right" position="front" flag1="-1" flag2="1" />
+    <xacro:add_wheels side="left" position="back" flag1="1" flag2="-1" />
+    <xacro:add_wheels side="right" position="back" flag1="-1" flag2="-1" />
+
+    <xacro:include filename="tarkbot_move.urdf.xacro" id="${id}"/>
+</robot>
